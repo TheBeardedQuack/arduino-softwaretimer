@@ -14,22 +14,44 @@ namespace TBQ{
         
         Timer sTimers[TBQ_TIMER_COUNT];
 
+        ErrorReturn<Timer*> GetActiveTimer(HndTimer hndTimer){
+            if(hndTimer == nullptr)
+                return {EError::InvalidHandle, nullptr};
+
+            for(int i=0; i<TBQ_TIMER_COUNT; i++)
+            {
+                if(hndTimer == &sTimers[i]){
+                    if(sTimers[i].inUse)
+                        return {EError::NoError, (Timer*)hndTimer};
+                    return {EError::InvalidHandle, nullptr};
+                }
+            }
+            return {EError::InvalidHandle, nullptr};
+        }
+
         void
         ServiceTimers()
         {
             auto timeNow = millis();
 
-            for(int i=0; i<TBQ_TIMER_COUNT; i++){
+            for(int i=0; i<TBQ_TIMER_COUNT; i++)
+            {
                 if(!sTimers[i].inUse)
                     continue;
                 
                 auto pTimer = &sTimers[i];
-                if(pTimer->duration < timeNow - pTimer->start){
+                if(pTimer->duration < timeNow - pTimer->start)
+                {
                     pTimer->callback({pTimer, pTimer->userObject});
-                    if(pTimer->autoReset)
-                        pTimer->start = timeNow;
-                    else
-                        pTimer->inUse = false;
+
+                    //Check timer has not been reset during callback
+                    if(pTimer->duration < timeNow - pTimer->start)
+                    {
+                        if(pTimer->autoReset)
+                            pTimer->start = timeNow;
+                        else
+                            pTimer->inUse = false;
+                    }
                 }
             }
         }
@@ -58,7 +80,7 @@ namespace TBQ{
                     callback,
                     userObject
                 };
-                return {EError::Success, &sTimers[i]};
+                return {EError::NoError, &sTimers[i]};
             }
 
             return {EError::OutOfResources, nullptr};
@@ -68,79 +90,65 @@ namespace TBQ{
         GetDuration(
             HndTimer handle
         ){
-            if(handle == nullptr)
-                return {EError::InvalidHandle, 0};
+            auto getTimer = GetActiveTimer(handle);
+            if(!getTimer)
+                return {getTimer.ErrorCode, 0};
             
-            auto pTimer = (Timer*)handle;
-            if(!(pTimer->inUse))
-                return {EError::InvalidHandle, 0};
-
-            return {EError::Success, pTimer->duration};
+            return {EError::NoError, getTimer.Result->duration};
         }
 
         ErrorReturn<Tick>
         GetTimeRemaining(
             HndTimer handle
         ){
-            if(handle == nullptr)
-                return {EError::InvalidHandle, 0};
-            
-            auto pTimer = (Timer*)handle;
-            if(!(pTimer->inUse))
-                return {EError::InvalidHandle, 0};
+            auto getTimer = GetActiveTimer(handle);
+            if(!getTimer)
+                return {getTimer.ErrorCode, 0};
 
-
-            return {EError::Success, pTimer->duration}
+            return {EError::NoError, 
+                getTimer.Result->duration - (millis() - getTimer.Result->start)};
         }
 
         ErrorReturn<Tick>
         GetTimeElapsed(
             HndTimer handle
         ){
-            if(handle == nullptr)
-                return {EError::InvalidHandle, 0};
-            
-            auto pTimer = (Timer*)handle;
-            if(!(pTimer->inUse))
-                return {EError::InvalidHandle, 0};
+            auto getTimer = GetActiveTimer(handle);
+            if(!getTimer)
+                return {getTimer.ErrorCode, 0};
 
-            return {EError::Success, millis() - pTimer->start};
+            return {EError::NoError, millis() - getTimer.Result->start};
         }
 
         ErrorReturn<bool>
         GetAutoReset(
             HndTimer handle
         ){
-            if(handle == nullptr)
-                return {EError::InvalidHandle, 0};
-            
-            auto pTimer = (Timer*)handle;
-            if(!(pTimer->inUse))
-                return {EError::InvalidHandle, 0};
+            auto getTimer = GetActiveTimer(handle);
+            if(!getTimer)
+                return {getTimer.ErrorCode, false};
 
-            return {EError::Success, pTimer->autoReset};
+            return {EError::NoError, getTimer.Result->autoReset};
         }
 
-        EError SetDuration(
+        EError
+        SetDuration(
             HndTimer handle,
             Tick duration,
             bool resetNow = false
         ){
-            if(handle == nullptr)
-                return EError::InvalidHandle;
+            auto getTimer = GetActiveTimer(handle);
+            if(!getTimer)
+                return getTimer.ErrorCode;
             
-            auto pTimer = (Timer*)handle;
-            if(!(pTimer->inUse))
-                return EError::InvalidHandle;
-
             if(duration > TBQ_TIMER_MAXDURATION)
                 return EError::InvalidInterval;
 
-            pTimer->duration = duration;
+            getTimer.Result->duration = duration;
             if(resetNow)
-                pTimer->start = millis();
+                getTimer.Result->start = millis();
 
-            return EError::Success;
+            return EError::NoError;
         }
 
         EError
@@ -148,16 +156,12 @@ namespace TBQ{
             HndTimer handle, 
             bool autoReset
         ){
-            if(handle == nullptr)
-                return EError::InvalidHandle;
+            auto getTimer = GetActiveTimer(handle);
+            if(!getTimer)
+                return getTimer.ErrorCode;
             
-            auto pTimer = (Timer*)handle;
-            if(!(pTimer->inUse))
-                return EError::InvalidHandle;
-
-            pTimer->autoReset = autoReset;
-
-            return EError::Success;
+            getTimer.Result->autoReset = autoReset;
+            return EError::NoError;
         }
 
         EError
@@ -165,31 +169,34 @@ namespace TBQ{
             HndTimer handle,
             void* userObject
         ){
-            if(handle == nullptr)
-                return EError::InvalidHandle;
+            auto getTimer = GetActiveTimer(handle);
+            if(!getTimer)
+                return getTimer.ErrorCode;
             
-            auto pTimer = (Timer*)handle;
-            if(!(pTimer->inUse))
-                return EError::InvalidHandle;
-
-            pTimer->userObject = userObject;
-
-            return EError::Success;
+            getTimer.Result->userObject = userObject;
+            return EError::NoError;
         }
 
-        EError
+        void
         StopTimer(
             HndTimer handle
         ){
-            if(handle == nullptr)
-                return EError::InvalidHandle;
+            auto getTimer = GetActiveTimer(handle);
+            if(!getTimer)
+                return;
             
-            // Don't check if in use if we're stopping anyway
-            // Allow repeated cleanup without punishment
-            auto pTimer = (Timer*)handle;
-            pTimer->inUse = false;
+            getTimer.Result->inUse = false;
+        }
 
-            return EError::Success;
+        EError
+        ResetTimer(
+            HndTimer handle
+        ){
+            auto getTimer = GetActiveTimer(handle);
+            if(!getTimer)
+                return getTimer.ErrorCode;
+
+            getTimer.Result->start = millis();
         }
     
     } //Namespace Timers

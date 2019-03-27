@@ -79,8 +79,13 @@ namespace TBQ
             void* userObject
             );
 
-        EError
+        void
         StopTimer(
+            HndTimer handle
+            );
+        
+        EError
+        ResetTimer(
             HndTimer handle
             );
     }
