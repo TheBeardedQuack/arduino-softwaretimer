@@ -44,8 +44,8 @@ namespace TBQ{
         const EError ErrorCode;
         T Result;
 
-        operator bool() const { return ErrorCode == EError::Success; }
-        bool operator!() const {return !operator bool; }
+        operator bool() const { return ErrorCode == EError::NoError; }
+        bool operator!() const {return ErrorCode != EError::NoError; }
     };
 
 } //Namespace TBQ
