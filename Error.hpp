@@ -16,7 +16,7 @@ namespace TBQ{
 
     enum struct EError : ErrorCode
     {
-        Success = 0,
+        NoError = 0,
 
         /*** GENERIC SYSTEM ERROR CODES ***/
 
@@ -39,7 +39,7 @@ namespace TBQ{
     };
 
     template<class TResult> 
-    struct ErrorReturn : public ErrorReturn<>
+    struct ErrorReturn
     {
         const EError ErrorCode;
         T Result;
