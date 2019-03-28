@@ -42,7 +42,7 @@ namespace TBQ{
     struct ErrorReturn
     {
         const EError ErrorCode;
-        T Result;
+        TResult Result;
 
         operator bool() const { return ErrorCode == EError::NoError; }
         bool operator!() const {return ErrorCode != EError::NoError; }

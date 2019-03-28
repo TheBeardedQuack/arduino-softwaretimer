@@ -1,9 +1,13 @@
 #include "Timer.hpp"
+#include <Arduino.h>
 
-namespace TBQ{
-    namespace Timers{
+namespace TBQ
+{
+    namespace Timers
+    {
                 
-        struct Timer {
+        struct Timer
+        {
             Tick start;
             Tick duration;
             bool inUse;
@@ -14,19 +18,38 @@ namespace TBQ{
         
         Timer sTimers[TBQ_TIMER_COUNT];
 
-        ErrorReturn<Timer*> GetActiveTimer(HndTimer hndTimer){
+        ErrorReturn<Timer*>
+        GetActiveTimer(
+            HndTimer hndTimer
+        ){
             if(hndTimer == nullptr)
-                return {EError::InvalidHandle, nullptr};
+            {
+                return ErrorReturn<Timer*>{
+                    EError::InvalidHandle,
+                    nullptr
+                    };
+            }
 
             for(int i=0; i<TBQ_TIMER_COUNT; i++)
             {
                 if(hndTimer == &sTimers[i]){
                     if(sTimers[i].inUse)
-                        return {EError::NoError, (Timer*)hndTimer};
-                    return {EError::InvalidHandle, nullptr};
+                    {
+                        return ErrorReturn<Timer*>{
+                            EError::NoError,
+                            (Timer*)hndTimer
+                            }; 
+                    }
+                    return ErrorReturn<Timer*>{
+                        EError::InvalidHandle,
+                        nullptr
+                        };
                 }
             }
-            return {EError::InvalidHandle, nullptr};
+            return ErrorReturn<Timer*>{
+                EError::InvalidHandle,
+                nullptr
+                };
         }
 
         void
@@ -42,7 +65,7 @@ namespace TBQ{
                 auto pTimer = &sTimers[i];
                 if(pTimer->duration < timeNow - pTimer->start)
                 {
-                    pTimer->callback({pTimer, pTimer->userObject});
+                    pTimer->callback(TimerElapsedEventArgs{(HndTimer)pTimer, pTimer->userObject});
 
                     //Check timer has not been reset during callback
                     if(pTimer->duration < timeNow - pTimer->start)
@@ -64,15 +87,25 @@ namespace TBQ{
             void* userObject
         ){
             if(duration > TBQ_TIMER_MAXDURATION)
-                return {EError::InvalidInterval, nullptr};
+            {
+                return EErrorReturn<HndTimer>{
+                    EError::InvalidInterval,
+                    nullptr
+                    };
+            }
             if(callback == nullptr)
-                return {EError::InvalidCallback, nullptr};
+            {
+                return EErrorReturn<HndTimer>{
+                    EError::InvalidCallback,
+                    nullptr
+                    };
+            }
 
             for(int i=0; i<TBQ_TIMER_COUNT; i++){
                 if(sTimers[i].inUse)
                     continue;
                 
-                sTimers[i] = {
+                sTimers[i] = Timer{
                     millis(),
                     duration,
                     true,
@@ -80,10 +113,16 @@ namespace TBQ{
                     callback,
                     userObject
                 };
-                return {EError::NoError, &sTimers[i]};
+                return EErrorReturn<HndTimer>{
+                    EError::NoError,
+                    &sTimers[i]
+                    };
             }
 
-            return {EError::OutOfResources, nullptr};
+            return EErrorReturn<HndTimer>{
+                EError::OutOfResources,
+                nullptr
+                };
         }
 
         ErrorReturn<Tick>
@@ -92,9 +131,17 @@ namespace TBQ{
         ){
             auto getTimer = GetActiveTimer(handle);
             if(!getTimer)
-                return {getTimer.ErrorCode, 0};
+            {
+                return EErrorReturn<Tick>{
+                    getTimer.ErrorCode,
+                    0
+                    };
+            }
             
-            return {EError::NoError, getTimer.Result->duration};
+            return EErrorReturn<Tick>{
+                EError::NoError,
+                getTimer.Result->duration
+                };
         }
 
         ErrorReturn<Tick>
@@ -103,10 +150,17 @@ namespace TBQ{
         ){
             auto getTimer = GetActiveTimer(handle);
             if(!getTimer)
-                return {getTimer.ErrorCode, 0};
+            {
+                return EErrorReturn<Tick>{
+                    getTimer.ErrorCode,
+                    0
+                    }; 
+            }
 
-            return {EError::NoError, 
-                getTimer.Result->duration - (millis() - getTimer.Result->start)};
+            return EErrorReturn<Tick>{
+                EError::NoError,
+                getTimer.Result->duration - (millis() - getTimer.Result->start)
+                };
         }
 
         ErrorReturn<Tick>
@@ -115,9 +169,17 @@ namespace TBQ{
         ){
             auto getTimer = GetActiveTimer(handle);
             if(!getTimer)
-                return {getTimer.ErrorCode, 0};
+            {
+                return EErrorReturn<Tick>{
+                    getTimer.ErrorCode,
+                    0
+                    };
+            }
 
-            return {EError::NoError, millis() - getTimer.Result->start};
+            return EErrorReturn<Tick>{
+                EError::NoError,
+                millis() - getTimer.Result->start
+                };
         }
 
         ErrorReturn<bool>
@@ -125,17 +187,24 @@ namespace TBQ{
             HndTimer handle
         ){
             auto getTimer = GetActiveTimer(handle);
-            if(!getTimer)
-                return {getTimer.ErrorCode, false};
+            if(!getTimer){
+                return EErrorReturn<bool>{
+                    getTimer.ErrorCode,
+                    false
+                    };
+            }
 
-            return {EError::NoError, getTimer.Result->autoReset};
+            return EErrorReturn<bool>{
+                EError::NoError,
+                getTimer.Result->autoReset
+                };
         }
 
         EError
         SetDuration(
             HndTimer handle,
             Tick duration,
-            bool resetNow = false
+            bool resetNow
         ){
             auto getTimer = GetActiveTimer(handle);
             if(!getTimer)
