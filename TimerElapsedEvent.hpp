@@ -1,10 +1,16 @@
-#ifndef TBQ_TIMERELAPSEDEVENTARGS_HPP
-#define TBQ_TIMERELAPSEDEVENTARGS_HPP
+#ifndef TBQ_TIMERELAPSEDEVENT_HPP
+#define TBQ_TIMERELAPSEDEVENT_HPP
+
+#include "TimerTypeDefs.hpp"
 
 namespace TBQ
 {
     namespace Timers
     {
+        class TimerElapsedEventArgs;
+        typedef void(*TimerElapsedEventHandler)(TimerElapsedEventArgs);
+
+        
         class TimerElapsedEventArgs
         {
         public:

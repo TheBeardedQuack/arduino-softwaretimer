@@ -88,14 +88,14 @@ namespace TBQ
         ){
             if(duration > TBQ_TIMER_MAXDURATION)
             {
-                return EErrorReturn<HndTimer>{
+                return ErrorReturn<HndTimer>{
                     EError::InvalidInterval,
                     nullptr
                     };
             }
             if(callback == nullptr)
             {
-                return EErrorReturn<HndTimer>{
+                return ErrorReturn<HndTimer>{
                     EError::InvalidCallback,
                     nullptr
                     };
@@ -113,13 +113,13 @@ namespace TBQ
                     callback,
                     userObject
                 };
-                return EErrorReturn<HndTimer>{
+                return ErrorReturn<HndTimer>{
                     EError::NoError,
                     &sTimers[i]
                     };
             }
 
-            return EErrorReturn<HndTimer>{
+            return ErrorReturn<HndTimer>{
                 EError::OutOfResources,
                 nullptr
                 };
@@ -132,13 +132,13 @@ namespace TBQ
             auto getTimer = GetActiveTimer(handle);
             if(!getTimer)
             {
-                return EErrorReturn<Tick>{
+                return ErrorReturn<Tick>{
                     getTimer.ErrorCode,
                     0
                     };
             }
             
-            return EErrorReturn<Tick>{
+            return ErrorReturn<Tick>{
                 EError::NoError,
                 getTimer.Result->duration
                 };
@@ -151,13 +151,13 @@ namespace TBQ
             auto getTimer = GetActiveTimer(handle);
             if(!getTimer)
             {
-                return EErrorReturn<Tick>{
+                return ErrorReturn<Tick>{
                     getTimer.ErrorCode,
                     0
                     }; 
             }
 
-            return EErrorReturn<Tick>{
+            return ErrorReturn<Tick>{
                 EError::NoError,
                 getTimer.Result->duration - (millis() - getTimer.Result->start)
                 };
@@ -170,13 +170,13 @@ namespace TBQ
             auto getTimer = GetActiveTimer(handle);
             if(!getTimer)
             {
-                return EErrorReturn<Tick>{
+                return ErrorReturn<Tick>{
                     getTimer.ErrorCode,
                     0
                     };
             }
 
-            return EErrorReturn<Tick>{
+            return ErrorReturn<Tick>{
                 EError::NoError,
                 millis() - getTimer.Result->start
                 };
@@ -188,13 +188,13 @@ namespace TBQ
         ){
             auto getTimer = GetActiveTimer(handle);
             if(!getTimer){
-                return EErrorReturn<bool>{
+                return ErrorReturn<bool>{
                     getTimer.ErrorCode,
                     false
                     };
             }
 
-            return EErrorReturn<bool>{
+            return ErrorReturn<bool>{
                 EError::NoError,
                 getTimer.Result->autoReset
                 };

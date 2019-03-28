@@ -3,7 +3,8 @@
 
 #include "TBQ.hpp"
 #include "Error.hpp"
-#include "TimerElapsedEventArgs.hpp"
+#include "TimerTypeDefs.hpp"
+#include "TimerElapsedEvent.hpp"
 
 #ifndef TBQ_TIMER_COUNT
 #define TBQ_TIMER_COUNT 10
@@ -20,10 +21,6 @@ namespace TBQ
 {
     namespace Timers
     {
-        typedef unsigned long Tick;
-        typedef Handle HndTimer;
-        typedef void(*TimerElapsedEventHandler)(TimerElapsedEventArgs);
-
         void
         ServiceTimers();
 
