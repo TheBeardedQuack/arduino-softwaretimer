@@ -6,13 +6,12 @@ This library is targeted at Arduino based SBCs and provides a simple mechanism f
 ### Fire and forget
 
 ```cpp
-#include "TBQ/Timer.hpp"
+#include "Timer.hpp"
 
 const int OutputPin = 13;
 
 void OnTimerElapsed(
-    TBQ::Timers::HndTimer hndTimer, // Handle for the elapsed timer
-    void* userObject // Optional user parameter passed in when starting the timer (nullptr by default)
+    TBQ::Timers::TimerElapsedEventArgs // Event parameters
 ){
     digitalWrite(OutputPin, LOW);
 }
