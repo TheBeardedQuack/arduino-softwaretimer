@@ -12,7 +12,7 @@ const int OutputPin = 13;
 
 void OnTimerElapsed(
     TBQ::Timers::TimerElapsedEventArgs // Event parameters
-){
+) {
     digitalWrite(OutputPin, LOW);
 }
 
@@ -33,7 +33,8 @@ void setup()
         // Failed to start timer.
         // `tmr.ErrorCode` contains the fail reason
     }
-    else{
+    else
+    {
         // Timer handle is found at `tmr.Result`
         // For this example we don't need to remember the handle
     }
@@ -55,7 +56,55 @@ After the 5000ms has elapsed, the next time `ServiceTimers()` is called it will 
 ### Periodic timer
 
 ```cpp
-//TODO: Perdiodic timer example
+#include "Timer.hpp"
+
+const int OutputPin = 13;
+bool pinActive = false;
+
+void OnTimerElapsed(
+    TBQ::Timers::TimerElapsedEventArgs // Event parameters
+) {
+    if(pinActive)
+    {
+        digitalWrite(OutputPin, LOW);
+        pinActive = false;
+    }
+    else
+    {
+        digitalWrite(OutputPin, HIGH);
+        pinActive = true;
+    }
+}
+
+void setup()
+{
+    pinMode(OutputPin, OUTPUT);
+
+    //Create timer
+    auto tmr = TBQ::Timers::StartTimer(
+        5000, // Timer delay in milliseconds
+        true, // Auto restart timer after elapsed?
+        OnTimerElapsed // Event handler
+    );
+
+    if(!tmr)
+    {
+        // Failed to start timer.
+        // `tmr.ErrorCode` contains the fail reason
+    }
+    else
+    {
+        // Timer handle is found at `tmr.Result`
+        // For this example we don't need to remember the handle
+    }
+}
+
+void loop()
+{
+    TBQ::Timers::ServiceTimers();
+
+    // Do rest of program loop
+}
 ```
 
 ### Passing parameters to the event handler
